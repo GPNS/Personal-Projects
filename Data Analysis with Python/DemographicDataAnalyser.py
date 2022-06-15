@@ -22,7 +22,6 @@ def calculate_demographic_data(print_data=True):
     # with and without `Bachelors`, `Masters`, or `Doctorate`
 
     higher_education = ("Bachelors" , "Masters" , "Doctorate")
-    salary_split = (">50K" , "<=50K")
     education_rich = 0
     education_poor = 0
     number_high_edu = 0
