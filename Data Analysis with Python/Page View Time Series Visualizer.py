@@ -12,18 +12,13 @@ df = df.set_index('date')  # Change index to date
 
 # Clean data
 # Removes when the page views were in the top 2.5% or bottom 2.5% of dataset
-#df = df.loc[
-#        (df["value"] >= df["value"].quantile(0.025))
-#        & (df["value"] <= df["value"].quantile(0.975))
-#    ]
+df = df.loc[(df["value"] >= df["value"].quantile(0.025))
+            & (df["value"] <= df["value"].quantile(0.975))]
+#df = df.value[(df.value > df.value.quantile(0.025)) & (df.value < df.value.quantile(0.975))]  # Transform df to series
 
-df = df.value[(df.value > df.value.quantile(0.025)) & (df.value < df.value.quantile(0.975))]  # Transform df to series
-
-print(df.count(numeric))
 def draw_line_plot():
-    df_tmp = df.to_frame()
     # Draw line plot
-    fig = df_tmp.plot.line()
+    fig = df.plot.line()
     fig = fig.get_figure()
     plt.title("Daily freeCodeCamp Forum Page Views 5/2016-12/2019")
     plt.xlabel('Date')
@@ -34,8 +29,9 @@ def draw_line_plot():
 
 def draw_bar_plot():
     # Copy and modify data for monthly bar plot
+    df_copy = df.value
     fig , ax = plt.subplots(figsize=(10 , 10)) # Initalize figure
-    bar_plot = df.groupby([df.index.year , df.index.month]).mean().unstack()  # Cleaning data to seperate year and month
+    bar_plot = df_copy.groupby([df.index.year , df.index.month]).mean().unstack()  # Cleaning data to seperate year and month
     bar_plot.plot(ax=ax , kind='bar')
     ax.set_xlabel('Years')
     ax.set_ylabel('Average Page Views')
@@ -50,7 +46,7 @@ def draw_bar_plot():
 
 def draw_box_plot():
     # Prepare data for box plots (this part is done!)
-    df_box = df.to_frame().copy()
+    df_box = df.copy()
     df_box.reset_index(inplace=True)
     df_box['year'] = [d.year for d in df_box.date]
     df_box['month'] = [d.strftime('%b') for d in df_box.date]
@@ -76,6 +72,3 @@ def draw_box_plot():
     # Save image and return fig (don't change this part)
     fig.savefig('box_plot.png')
     return fig
-A = draw_line_plot()
-B = draw_box_plot()
-C = draw_box_plot()

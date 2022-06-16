@@ -1,5 +1,5 @@
 """
-Code for Medical Data Visualizer of FCC (not done as there is an error in the heatmap values. Wasn't able to find it
+Code for Medical Data Visualizer of FCC
 """
 
 import pandas as pd
@@ -11,20 +11,15 @@ import numpy as np
 df = pd.read_csv('medical_examination.csv')
 
 # Add 'overweight' column
-#df['overweight'] = df["weight"]/((df["height"]/100)**2)
-#df['overweight'] = df['overweight'].apply(lambda x: 1 if x > 25 else 0)
-df["overweight"] = np.where(
-    df["weight"] / (df["height"]/100)**2 > 25,
-    1,
-    0,
-)
+height = df['height']/100  # Get height in m
+BMI = df['weight']/height**2  # Calculate BMI
+df.loc[BMI < 25, 'overweight'] = 0  # If value of BMI less than 25 at same index of df in column (creates it) 'overweight' the value is 0
+df.loc[BMI >= 25, 'overweight'] = 1
 # Normalize data by making 0 always good and 1 always bad. If the value of 'cholesterol' or 'gluc' is 1, make the value 0. If the value is more than 1, make the value 1.
-#df["cholesterol"] = df["cholesterol"].apply(lambda x: 1 if x > 1 else 0)
-df["cholesterol"] = np.where(df["cholesterol"] == 1, 0, 1)
-df["gluc"] = np.where(df["gluc"] == 1, 0, 1)
-
-#df["gluc"] = pd.cut(df['gluc'], bins=[0,1,np.inf], labels=[0, 1])
-#df["gluc"] = df["gluc"].apply(lambda x: 1 if x > 1 else 0)
+df.loc[df['cholesterol'] == 1, 'cholesterol'] = 0  # If value in cholesterol is 1 then the new value in cholesterol is now 0
+df.loc[df['cholesterol'] > 1, 'cholesterol'] = 1
+df.loc[df['gluc'] == 1, 'gluc'] = 0
+df.loc[df['gluc'] > 1, 'gluc'] = 1
 
 # Draw Categorical Plot
 def draw_cat_plot():
@@ -33,12 +28,11 @@ def draw_cat_plot():
     # Test doesn't work if not alphabetical
     df_cat = pd.melt(df, id_vars='cardio', value_vars=names)
 
-
     # Group and reformat the data to split it by 'cardio'. Show the counts of each feature. You will have to rename one of the columns for the catplot to work correctly.
 
     # Draw the catplot with 'sns.catplot()'
     temp = sns.catplot(data=df_cat, kind='count', x='variable', hue='value', col='cardio')
-    temp.set_axis_labels("variable", "total")  # Need to change label required by tests and return only figure
+    temp.set_axis_labels("variable", "total")  # Sets axis labels
     fig = temp.fig
     # Do not modify the next two lines
     fig.savefig('catplot.png')
@@ -56,12 +50,7 @@ def draw_cat_plot():
 # Draw Heat Map
 def draw_heat_map():
     # Clean the data
-    #Each condition needs to be true for row to be conserved
-    #df_heat = df[(df['ap_lo'] <= df['ap_hi']) &
-    #   (df['height'] >= (df['height'].quantile(0.025))) & #Removes lowest values of height
-    #   (df['height'] <= (df['height'].quantile(0.975))) & #Removes highest values of height
-    #   (df['weight'] >= (df['weight'].quantile(0.025))) &
-    #   (df['weight'] <= (df['weight'].quantile(0.975)))]
+    #Each condition needs to be true for row to be conserved need to be done at once not subsequently or df 'resets'
     df_heat = df.loc[
         (df["ap_lo"] <= df["ap_hi"])
         & (df["height"] >= df["height"].quantile(0.025))
@@ -71,25 +60,18 @@ def draw_heat_map():
     ]
 
     # Calculate the correlation matrix
-    corr = df.corr()
+    corr = df_heat.corr()
 
     # Generate a mask for the upper triangle
-    mask = np.zeros_like(corr)
-    mask[np.triu_indices_from(mask)] = True
-    #mask = np.triu(np.ones_like(corr , dtype=bool))
-
+    #mask = np.zeros_like(corr)
+    #mask[np.triu_indices_from(mask)] = True
+    mask = np.triu(np.ones_like(corr))
     # Set up the matplotlib figure
     fig, ax = plt.subplots(figsize=(12, 8))
 
     # Draw the heatmap with 'sns.heatmap()'
-    sns.heatmap(corr,
-                mask = mask,
-                vmax=0.4 ,
-                square = True,
-                annot=True,
-                fmt='.1f')
+    sns.heatmap(corr, mask=mask, annot=True, linewidths=.5, vmin = 0, vmax = .3, fmt=".1f")
 
     # Do not modify the next two lines
     fig.savefig('heatmap.png')
     return fig
-A=draw_heat_map()
